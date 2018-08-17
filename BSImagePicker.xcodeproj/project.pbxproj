@@ -678,6 +678,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = se.backslashed.BSImagePickerExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Release;
