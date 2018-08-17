@@ -23,11 +23,28 @@
 import UIKit
 import Photos
 
+public protocol DidFinishPhotoSelectionProtcol {
+    func didFinishPhotoSelection(assets: [PHAsset])
+}
+
 /**
 BSImagePickerViewController.
 Use settings or buttons to customize it to your needs.
 */
 open class BSImagePickerViewController : UINavigationController {
+    
+    var cD : DidFinishPhotoSelectionProtcol!
+    public var customDelegate : DidFinishPhotoSelectionProtcol {
+        
+        get {
+            return cD
+        }
+        set{
+            cD = newValue
+        }
+
+    }
+    
     /**
      Object that keeps settings for the picker.
      */
@@ -81,6 +98,8 @@ open class BSImagePickerViewController : UINavigationController {
         vc.cancelBarButton = self.cancelButton
         vc.albumTitleView = self.albumTitleView
         
+        vc.customDelegate = self.cD
+        
         return vc
     }()
     
@@ -116,6 +135,8 @@ open class BSImagePickerViewController : UINavigationController {
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
+    
+    
     
     /**
     Load view. See apple documentation
@@ -257,9 +278,7 @@ extension BSImagePickerViewController: BSImagePickerSettings {
 
 // MARK: Album button
 extension BSImagePickerViewController {
-    /**
-     Album button in title view
-     */
+    
     @objc public var albumButton: UIButton {
         get {
             return albumTitleView

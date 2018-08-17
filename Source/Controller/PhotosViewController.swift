@@ -23,6 +23,9 @@
 import UIKit
 import Photos
 import BSGridCollectionViewLayout
+
+
+
 fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
   switch (lhs, rhs) {
   case let (l?, r?):
@@ -44,6 +47,7 @@ fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 }
 
 
+
 final class PhotosViewController : UICollectionViewController {    
     @objc var selectionClosure: ((_ asset: PHAsset) -> Void)?
     @objc var deselectionClosure: ((_ asset: PHAsset) -> Void)?
@@ -53,6 +57,9 @@ final class PhotosViewController : UICollectionViewController {
     @objc var doneBarButton: UIBarButtonItem?
     @objc var cancelBarButton: UIBarButtonItem?
     @objc var albumTitleView: UIButton?
+    
+    var customDelegate : DidFinishPhotoSelectionProtcol!
+    var assetToReturn = [PHAsset]()
     
     @objc let expandAnimator = ZoomAnimator()
     @objc let shrinkAnimator = ZoomAnimator()
@@ -168,7 +175,10 @@ final class PhotosViewController : UICollectionViewController {
         DispatchQueue.global().async {
             closure(photosDataSource.selections)
         }
-        
+        print("PATATA_DONE")
+        //customDelegate.didFinishPhotoSelection(assets: assetToReturn)
+        customDelegate.didFinishPhotoSelection(assets: photosDataSource.selections )
+
         dismiss(animated: true, completion: nil)
     }
     
@@ -302,7 +312,8 @@ extension PhotosViewController {
         // We need a cell
         guard let cell = collectionView.cellForItem(at: indexPath) as? PhotoCell else { return false }
         let asset = photosDataSource.fetchResult.object(at: indexPath.row)
-
+        //assetToReturn.append(asset)
+        
         // Select or deselect?
         if let index = photosDataSource.selections.index(of: asset) { // Deselect
             // Deselect asset
@@ -312,7 +323,7 @@ extension PhotosViewController {
             updateDoneButton()
 
             // Get indexPaths of selected items
-            let selectedIndexPaths = photosDataSource.selections.compactMap({ (asset) -> IndexPath? in
+            let selectedIndexPaths = photosDataSource.selections.flatMap({ (asset) -> IndexPath? in
                 let index = photosDataSource.fetchResult.index(of: asset)
                 guard index != NSNotFound else { return nil }
                 return IndexPath(item: index, section: 1)
@@ -476,19 +487,13 @@ extension PhotosViewController: PHPhotoLibraryChangeObserver {
                     // Update fetch result
                     photosDataSource.fetchResult = photosChanges.fetchResultAfterChanges as! PHFetchResult<PHAsset>
                     
-                    collectionView.performBatchUpdates({
-                        if let removed = photosChanges.removedIndexes {
-                            collectionView.deleteItems(at: removed.bs_indexPathsForSection(1))
-                        }
-                        
-                        if let inserted = photosChanges.insertedIndexes {
-                            collectionView.insertItems(at: inserted.bs_indexPathsForSection(1))
-                        }
-                        
-                        if let changed = photosChanges.changedIndexes {
-                            collectionView.reloadItems(at: changed.bs_indexPathsForSection(1))
-                        }
-                    })
+                    if let removed = photosChanges.removedIndexes {
+                        collectionView.deleteItems(at: removed.bs_indexPathsForSection(1))
+                    }
+                    
+                    if let inserted = photosChanges.insertedIndexes {
+                        collectionView.insertItems(at: inserted.bs_indexPathsForSection(1))
+                    }
                     
                     // Changes is causing issues right now...fix me later
                     // Example of issue:
@@ -501,6 +506,9 @@ extension PhotosViewController: PHPhotoLibraryChangeObserver {
                     //                        print("changed")
                     //                        collectionView.reloadItemsAtIndexPaths(changed.bs_indexPathsForSection(1))
                     //                    }
+                    
+                    // Reload view
+                    collectionView.reloadData()
                 } else if photosChanges.hasIncrementalChanges == false {
                     // Update fetch result
                     photosDataSource.fetchResult = photosChanges.fetchResultAfterChanges as! PHFetchResult<PHAsset>
